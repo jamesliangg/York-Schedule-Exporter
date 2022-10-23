@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>York Schedule Exporter</title>
+  <meta charset='utf-8' />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /> 
+  <meta name="description" content="Export timetable to an iCalendar file from REM.">
+  <meta name="keywords" content="York, University, Timetable, JavaScript">
+  <meta name="author" content="James Liang">
+</head>
+
+<body>
+  <script type="text/javascript" src="backend.js"> </script>
+    <h2>Paste REM Schedule Here</h2>
+    <textarea id="input" name="input" rows="4" cols="50"></textarea>
+    <br>
+    <button onclick="textToArray()" class="submit">Submit</button>
+  </body>
+</html>
