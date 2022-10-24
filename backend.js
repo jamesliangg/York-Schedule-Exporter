@@ -3,10 +3,13 @@ var winterArray = [];
 var begin = 'BEGIN:VCALENDAR';
 var version = 'VERSION:2.0';
 var prodid = 'PRODID:-//James Liang//York Exporter//EN';
+var ending = 'END:VCALENDAR';
 var fallStart = "";
 var fallEnd = "";
 var winterStart = "";
 var winterEnd = "";
+var academicYear = "";
+var fileOutput = "";
 
 function mainFunction() {
     fetch_demo();
@@ -60,6 +63,9 @@ function classesStart(resp) {
             i = i + 2;
             winterEnd = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
         }
+        if (htmlArray[i].includes("Undergraduate Fall/Winter")) {
+            academicYear = htmlArray[i].substring(htmlArray[i].indexOf("Winter") + 6, htmlArray[i].indexOf("Important") - 1).trim();
+        }
     }
     console.log(fallStart);
     console.log(fallEnd);
@@ -69,27 +75,122 @@ function classesStart(resp) {
 }
 
 function createCalendar() {
-    console.log(begin);
-    console.log(version);
-    console.log(prodid);
-    for (var i in fallArray) {
-        console.log("BEGIN:VEVENT");
-        console.log("DTSTART: " + fallArray[i].substring(fallArray[i].indexOf(":") - 6, fallArray[i].indexOf(":") + 3).trim());
-        console.log("DTEND: " + fallArray[i].substring(fallArray[i].indexOf(":") - 6, fallArray[i].indexOf(":") + 3).trim());
-        console.log("RRULE:FREQ=WEEKLY;UNTIL=" + ";WKST=SU;BYDAY=" + fallArray[i].substring(fallArray[i].indexOf(":") - 6, fallArray[i].indexOf(":") - 3).trim().substring(0,2));
-        console.log("SUMMARY: " + fallArray[i].substring(fallArray[i].indexOf("-") + 2, fallArray[i].indexOf("Cr=")).trim() + " in " + fallArray[i].substring(fallArray[i].lastIndexOf("min") + 3, fallArray[i].length).trim());
-        console.log("LOCATION: " + fallArray[i].substring(fallArray[i].lastIndexOf("min") + 3, fallArray[i].length).trim());
-        console.log("DESCRIPTION: " + fallArray[i].replace(/\s+/g,' ').trim());
-        console.log("END:VEVENT");
-    }
-    for (var i in winterArray) {
-        console.log("BEGIN:VEVENT");
-        console.log("DTSTART: " + winterArray[i].substring(winterArray[i].indexOf(":") - 6, winterArray[i].indexOf(":") + 3).trim());
-        console.log("DTEND: " + winterArray[i].substring(winterArray[i].indexOf(":") - 6, winterArray[i].indexOf(":") + 3).trim());
-        console.log("RRULE:FREQ=WEEKLY;UNTIL=" + ";WKST=SU;BYDAY=" + winterArray[i].substring(winterArray[i].indexOf(":") - 6, winterArray[i].indexOf(":") - 3).trim().substring(0,2));
-        console.log("SUMMARY:" + winterArray[i].substring(winterArray[i].indexOf("-") + 2, winterArray[i].indexOf("Cr=")).trim() + " in " + winterArray[i].substring(winterArray[i].lastIndexOf("min") + 3, winterArray[i].length).trim());
-        console.log("LOCATION: " + winterArray[i].substring(winterArray[i].lastIndexOf("min") + 3, winterArray[i].length).trim());
-        console.log("DESCRIPTION: " + winterArray[i].replace(/\s+/g,' ').trim());
-        console.log("END:VEVENT");
-    }
+    fileOutput = begin;
+    fileOutput = fileOutput + "\n" + version;
+    fileOutput = fileOutput + "\n" + prodid;
+    courseEvent(fallArray);
+    courseEvent(winterArray);
+    fileOutput = fileOutput + "\n" + ending;
+    download("scheudle.ics", fileOutput);
 }
+
+function courseEvent(seasonArray) {
+    for (var i in seasonArray) {
+        var beginTime = findBeginTime(seasonArray[i]);
+        var endTime = yorkDuration(seasonArray[i].substring(seasonArray[i].indexOf("min") - 4, seasonArray[i].indexOf("min") - 1).trim(), beginTime);
+        fileOutput = fileOutput + "\n" + ("BEGIN:VEVENT");
+        fileOutput = fileOutput + "\n" + ("DTSTART:" + beginTime);
+        fileOutput = fileOutput + "\n" + ("DTEND: " + endTime);
+        fileOutput = fileOutput + "\n" + ("RRULE:FREQ=WEEKLY;UNTIL=" + findRuleEnd(endTime, seasonArray[i]) + ";WKST=SU;BYDAY=" + seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0,2));
+        fileOutput = fileOutput + "\n" + ("SUMMARY:" + seasonArray[i].substring(seasonArray[i].indexOf("-") + 2, seasonArray[i].indexOf("Cr=")).trim() + " in " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
+        fileOutput = fileOutput + "\n" + ("LOCATION: " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
+        fileOutput = fileOutput + "\n" + ("DESCRIPTION: " + seasonArray[i].replace(/\s+/g,' ').trim());
+        fileOutput = fileOutput + "\n" + ("END:VEVENT");
+        console.log("BEGIN:VEVENT");
+        console.log("DTSTART:" + beginTime);
+        console.log("DTEND: " + endTime);
+        console.log("RRULE:FREQ=WEEKLY;UNTIL=" + findRuleEnd(endTime, seasonArray[i]) + ";WKST=SU;BYDAY=" + seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0,2));
+        console.log("SUMMARY:" + seasonArray[i].substring(seasonArray[i].indexOf("-") + 2, seasonArray[i].indexOf("Cr=")).trim() + " in " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
+        console.log("LOCATION: " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
+        console.log("DESCRIPTION: " + seasonArray[i].replace(/\s+/g,' ').trim());
+        console.log("END:VEVENT");
+    }  
+}
+
+function findBeginTime(weekday) {
+    if (weekday.includes("Fall")) {
+        var currentYear = academicYear.substring(0,4);
+        var currentDay = fallStart.substring(fallStart.length - 2, fallStart.length).trim();
+        while (currentDay.length < 2) {
+            currentDay = "0" + currentDay;
+        }
+        var currentTime = weekday.substring(weekday.indexOf(":") - 2, weekday.indexOf(":") + 3).trim();
+        currentTime = currentTime.replace(/:/g,'');
+        while (currentTime.length < 4) {
+            currentTime = "0" + currentTime;
+        }
+        var beginTime = currentYear + "09" + currentDay + "T" + currentTime + "00";
+    }
+    else if (weekday.includes("Winter")) {
+        var currentYear = academicYear.substring(5,9);
+        var currentDay = winterStart.substring(winterStart.length - 2, winterStart.length).trim();
+        while (currentDay.length < 2) {
+            currentDay = "0" + currentDay;
+        }
+        var currentTime = weekday.substring(weekday.indexOf(":") - 2, weekday.indexOf(":") + 3).trim();
+        currentTime = currentTime.replace(/:/g,'');
+        while (currentTime.length < 4) {
+            currentTime = "0" + currentTime;
+        }
+        var beginTime = currentYear + "01" + currentDay + "T" + currentTime + "00";
+    }
+    return beginTime;
+}
+
+function yorkDuration(duration, startTime) {
+    var originalStartTime = startTime;
+    // isolates just number part of String
+    startTime = startTime.substring(startTime.lastIndexOf("T") + 1, startTime.length);
+    // calculates hours and minutes within that duration
+    var yorkHours = Math.floor(parseInt(duration) / 60);
+    var yorkMinutes = parseInt(duration) - yorkHours * 60;
+    // adds end hour to current start time
+    var endHour = (Math.floor(parseInt(startTime) / 10000) + yorkHours) * 100;
+    // converts any additional minutes to hour
+    var minutesToHour = (Math.floor(parseInt(startTime.slice(2)) / 100));
+    // if minutes are or above 60, go to next hour and convert to format
+    if ((minutesToHour + yorkMinutes) >= 60) {
+      endHour = endHour / 100 + 1;
+      var endTime = endHour * 10000 + (minutesToHour + yorkMinutes - 60) * 100;
+    }
+    // if minutes are fine, convert back to format
+    else {
+      var endTime = endHour * 100 + (minutesToHour + yorkMinutes) * 100;
+    }
+    return originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime.toString();
+}
+
+function findRuleEnd(endTime, weekday) {
+    if (weekday.includes("Fall")) {
+        var currentYear = academicYear.substring(0,4);
+        var currentDay = fallEnd.substring(fallStart.length - 2, fallEnd.length).trim();
+        while (currentDay.length < 2) {
+            currentDay = "0" + currentDay;
+        }
+        var currentTime = endTime.substring(endTime.lastIndexOf("T") + 1, endTime.length);
+        var ruleEnd = currentYear + "12" + currentDay + "T" + currentTime;
+    }
+    else if (weekday.includes("Winter")) {
+        var currentYear = academicYear.substring(5,9);
+        var currentDay = winterEnd.substring(winterEnd.length - 2, winterEnd.length).trim();
+        while (currentDay.length < 2) {
+            currentDay = "0" + currentDay;
+        }
+        var currentTime = endTime.substring(endTime.lastIndexOf("T") + 1, endTime.length);
+        var ruleEnd = currentYear + "04" + currentDay + "T" + currentTime;
+    }
+    return ruleEnd;
+}
+
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+  
+    element.style.display = 'none';
+    document.body.appendChild(element);
+  
+    element.click();
+  
+    document.body.removeChild(element);
+  }
