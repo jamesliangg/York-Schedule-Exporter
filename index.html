@@ -13,9 +13,27 @@
 
 <body>
   <script type="text/javascript" src="backend.js"> </script>
-    <h2>Paste REM Schedule Here</h2>
+    <h1>York REM Schedule Exporter</h1>
+    <body>Takes York University Registration and Enrolment course details to export into a iCalendar file.</body>
+    <h2>Instructions</h2>
+    <ol>
+      <li>Login to REM at <a href="https://registrar.yorku.ca/enrol/visiting/enrolment">https://registrar.yorku.ca/enrol/visiting/enrolment</a></li>
+      <li>Select the academic session you'd like to export</li>
+      <li>Click Continue</li>
+      <li>Click Course Details</li>
+      <li>Copy all of your course details</li>
+      <li>Paste the details into the text box below</li>
+      <li>Click Export</li>
+      <li>Import to the calendar you desire or find break times with <a href="https://ru3.netlify.app/">https://ru3.netlify.app/</a></li>
+    </ol>
+    <h3>Paste Here:</h3>
     <textarea id="input" name="input" rows="4" cols="50"></textarea>
     <br>
-    <button onclick="mainFunction()" class="submit">Submit</button>
+    <button onclick="mainFunction()" class="submit">Export</button>
   </body>
+  <br>
+  <br>
+  <body>Created by <a href="https://github.com/jamesliangg">James Liang</a>. Inspired by <a href="https://schedule.wattools.ca/">Viktor Stanchev.</a></body>
+  <br>
+  <body>Read the source code on <a href="https://github.com/jamesliangg/York-Schedule-Exporter">Github</a></body>
 </html>
