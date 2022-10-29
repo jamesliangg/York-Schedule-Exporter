@@ -102,6 +102,7 @@ function courseEvent(seasonArray) {
     }  
 }
 
+// https://www.w3schools.com/jsref/jsref_obj_regexp.asp
 function findBeginTime(weekday) {
     if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
         var currentYear = academicYear.substring(0,4);
@@ -147,10 +148,10 @@ function yorkDuration(duration, startTime) {
       var endTime = endHour * 100 + (minutesToHour + yorkMinutes) * 100;
     }
     var endTime = endTime.toString();
+    // add zeros in front to correct time format
     while (endTime.length < 6) {
         endTime = "0" + endTime;
     }
-    console.log(originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime);
     return originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime;
 }
 
@@ -177,15 +178,13 @@ function findRuleEnd(endTime, weekday) {
     return ruleEnd;
 }
 
+// https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
 function download(filename, text) {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
-  
     element.style.display = 'none';
     document.body.appendChild(element);
-  
     element.click();
-  
     document.body.removeChild(element);
   }
