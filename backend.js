@@ -91,10 +91,11 @@ function courseEvent(seasonArray) {
     for (var i in seasonArray) {
         var beginTime = findBeginTime(seasonArray[i]);
         var endTime = yorkDuration(seasonArray[i].substring(seasonArray[i].indexOf("min") - 4, seasonArray[i].indexOf("min") - 1).trim(), beginTime);
+        var weekday = seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0,2);
         fileOutput = fileOutput + "\n" + ("BEGIN:VEVENT");
-        fileOutput = fileOutput + "\n" + ("DTSTART:" + beginTime);
-        fileOutput = fileOutput + "\n" + ("DTEND: " + endTime);
-        fileOutput = fileOutput + "\n" + ("RRULE:FREQ=WEEKLY;UNTIL=" + findRuleEnd(endTime, seasonArray[i]) + ";WKST=SU;BYDAY=" + seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0,2));
+        fileOutput = fileOutput + "\n" + ("DTSTART:" + firstWeekday(beginTime, weekday));
+        fileOutput = fileOutput + "\n" + ("DTEND: " + firstWeekday(endTime, weekday));
+        fileOutput = fileOutput + "\n" + ("RRULE:FREQ=WEEKLY;UNTIL=" + findRuleEnd(endTime, seasonArray[i]) + ";WKST=SU;BYDAY=" + weekday);
         fileOutput = fileOutput + "\n" + ("SUMMARY:" + seasonArray[i].substring(seasonArray[i].indexOf("-") + 2, seasonArray[i].indexOf("Cr=")).trim() + " in " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
         fileOutput = fileOutput + "\n" + ("LOCATION: " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
         fileOutput = fileOutput + "\n" + ("DESCRIPTION: " + seasonArray[i].replace(/\s+/g,' ').trim());
@@ -170,7 +171,7 @@ function findRuleEnd(endTime, weekday) {
     while (currentDay.length < 2) {
         currentDay = "0" + currentDay;
     }
-    var currentTime = /[1-2]?\d\d\d[0][0]/.exec(endTime).toString();
+    var currentTime = /[0-2]?\d\d\d[0][0]/.exec(endTime).toString();
     while (currentTime.length < 6) {
         currentTime = "0" + currentTime;
     }
@@ -187,4 +188,45 @@ function download(filename, text) {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-  }
+}
+
+function firstWeekday(currentDate, weekday) {
+    dayIndex = 0;
+    var currentTime = /[0-2]?\d\d\d[0][0]/.exec(currentDate).toString();
+    console.log(currentTime);
+    var currentDate = /[1-2]?\d\d\d\d\d\d\d/.exec(currentDate).toString();
+    var year = currentDate.substring(0,4);
+    var month = currentDate.substring(4,6);
+    var day = currentDate.substring(6,8);
+    if (weekday.includes("MO")){
+        dayIndex = 1;
+    }
+    else if (weekday.includes("TU")){
+        dayIndex = 2;
+    }
+    else if (weekday.includes("WE")){
+        dayIndex = 3;
+    }
+    else if (weekday.includes("TH")){
+        dayIndex = 4;
+    }
+    else if (weekday.includes("FR")){
+        dayIndex = 5;
+    }
+    else if (weekday.includes("SA")){
+        dayIndex = 6;
+    }
+    else if (weekday.includes("SU")){
+        dayIndex = 7;
+    }
+    var modifiedDate = new Date(year, month - 1, day);
+    console.log(modifiedDate);
+    modifiedDate.setDate(modifiedDate.getDate() + ((dayIndex + 7 - modifiedDate.getDay()) % 7));
+    day = modifiedDate.getDate().toString();
+    while (day.length < 2) {
+        day = "0" + day;
+    }
+    modifiedDate = year + "" + month + "" + day + "T" + currentTime;
+    console.log(modifiedDate);
+    return modifiedDate;
+}
