@@ -1,9 +1,9 @@
 var fallArray = [];
 var winterArray = [];
 var fullYearArray = [];
-var begin = 'BEGIN:VCALENDAR';
-var version = 'VERSION:2.0';
-var prodid = 'PRODID:-//James Liang//York Exporter//EN';
+var beginningFormat = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//James Liang//York Exporter//EN`;
 var ending = 'END:VCALENDAR';
 var fallStart = "";
 var fallEnd = "";
@@ -17,16 +17,23 @@ function mainFunction() {
     textToArray();
 }
 
+/**
+ * Takes pasted text and splits it into different arrays.
+ */
 function textToArray() {
     var pastedText = document.getElementById("input").value;
     console.log(pastedText);
+    // split classes into array
     var pastedArray = pastedText.split("\n");
+    // remove blank lines
     pastedArray = pastedArray.filter((a) => a);
+    // add Term and Course Name to classes that are missing
     for (var i in pastedArray) {
         if (!pastedArray[i].includes("Fall") && !pastedArray[i].includes("Winter") && pastedArray[i].includes(":")) {
             pastedArray[i] = pastedArray[i - 1].substring(0, pastedArray[i - 1].indexOf("Cr=") + 9) + " " + pastedArray[i];
         }
     }
+    // add courses to array based on term
     for (var i in pastedArray) {
         if (pastedArray[i].includes("Fall") && !pastedArray[i].includes("Winter")) {
             fallArray.push(pastedArray[i]);
@@ -40,7 +47,10 @@ function textToArray() {
     }
 }
 
-// https://www.scrapingbee.com/blog/web-scraping-javascript/
+/**
+ * Gets York important dates. Then calls classesStart function.
+ * https://www.scrapingbee.com/blog/web-scraping-javascript/
+ */
 async function fetch_demo()
 {
 	const resp = await fetch('https://registrar.yorku.ca/enrol/dates/2022-2023/fall-winter');
@@ -48,24 +58,33 @@ async function fetch_demo()
     classesStart(htmlOut);
 }
 
+/**
+ * Finds the start and end times of the terms.
+ * 
+ * @param {String} resp HTML of York important dates
+ */
 function classesStart(resp) {
     var htmlArray = resp.split("\n");
     for (var i in htmlArray) {
+        // find Winter and Fall class start dates
         if (htmlArray[i].includes("Classes start") && htmlArray[i].includes("style")) {
             i++;
             fallStart = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
             i = i + 2;
             winterStart = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
         }
+        // find Fall end date
         else if (htmlArray[i].includes("Fall classes end") && htmlArray[i].includes("style")) {
             i++;
             fallEnd = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
         }
+        // find Winter end date
         else if (htmlArray[i].includes("Winter classes end") && htmlArray[i].includes("style")) {
             i++;
             i = i + 2;
             winterEnd = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
         }
+        // find current academic year
         if (htmlArray[i].includes("Undergraduate Fall/Winter")) {
             academicYear = htmlArray[i].substring(htmlArray[i].indexOf("Winter") + 6, htmlArray[i].indexOf("Important") - 1).trim();
         }
@@ -77,21 +96,35 @@ function classesStart(resp) {
     createCalendar();
 }
 
+/**
+ * Calls functions to create and download calendar.
+ */
 function createCalendar() {
-    fileOutput = begin;
-    fileOutput = fileOutput + "\n" + version;
-    fileOutput = fileOutput + "\n" + prodid;
+    // iCalendar formatting
+    fileOutput = beginningFormat;
+    // adds Fall and Winter courses
     courseEvent(fallArray);
     courseEvent(winterArray);
+    // iCalendar formatting
     fileOutput = fileOutput + "\n" + ending;
-    download("scheudle.ics", fileOutput);
+    // download file
+    download("york_schedule.ics", fileOutput);
 }
 
+/**
+ * Formats each course for iCalendar and adds it to the output String.
+ * 
+ * @param {Array} seasonArray term array to go through
+ */
 function courseEvent(seasonArray) {
     for (var i in seasonArray) {
+        // find beginning time of course Format: YYYYMMDDTHHMMSS
         var beginTime = findBeginTime(seasonArray[i]);
+        // find ending time of course Format: YYYYMMDDTHHMMSS
         var endTime = yorkDuration(seasonArray[i].substring(seasonArray[i].indexOf("min") - 4, seasonArray[i].indexOf("min") - 1).trim(), beginTime);
+        // find weekday Format: MO, TU, WE, TH, FR
         var weekday = seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0,2);
+        // iCalendar formatting for events
         fileOutput = fileOutput + "\n" + ("BEGIN:VEVENT");
         fileOutput = fileOutput + "\n" + ("DTSTART:" + firstWeekday(beginTime, weekday));
         fileOutput = fileOutput + "\n" + ("DTEND: " + firstWeekday(endTime, weekday));
@@ -103,31 +136,49 @@ function courseEvent(seasonArray) {
     }  
 }
 
-// https://www.w3schools.com/jsref/jsref_obj_regexp.asp
+/**
+ * Finds the beginning time of course
+ * https://www.w3schools.com/jsref/jsref_obj_regexp.asp
+ * 
+ * @param {String} weekday course information Format: Term - Course Name	Format	Day/Time	Duration	Room
+ * @returns beginning time Format: YYYYMMDDTHHMMSS
+ */
 function findBeginTime(weekday) {
+    // setting Fall parameters
     if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
         var currentYear = academicYear.substring(0,4);
         var seasonStart = fallStart;
         var startMonth = "09";
     }
+    // setting Winter parameters
     else if (weekday.includes("Winter") && !weekday.includes("Fall")) { 
         var currentYear = academicYear.substring(5,9);
         var seasonStart = winterStart;
         var startMonth = "01";
     }
+    // finds day and ensures is two digits Format: DD
     var currentDay = seasonStart.substring(seasonStart.length - 2, seasonStart.length).trim();
     while (currentDay.length < 2) {
         currentDay = "0" + currentDay;
     }
+    // finds current time and removes :, also ensures is four digits Format: HHMM
     var currentTime = /[1-2]?\d:[0-5]\d/.exec(weekday).toString();
     currentTime = currentTime.replace(/:/g,'');
     while (currentTime.length < 4) {
         currentTime = "0" + currentTime;
     }
+    // resulting begin time Format: YYYYMMDDTHHMMSS
     var beginTime = currentYear + startMonth + currentDay + "T" + currentTime + "00";
     return beginTime;
 }
 
+/**
+ * Finds end time based on start time and duration.
+ * 
+ * @param {String} duration duration of class Format: MMM
+ * @param {String} startTime start time Format: YYYYMMDDTHHMMSS
+ * @returns end time Format: YYYYMMDDTHHMMSS
+ */
 function yorkDuration(duration, startTime) {
     var originalStartTime = startTime;
     // isolates just number part of String
@@ -156,30 +207,48 @@ function yorkDuration(duration, startTime) {
     return originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime;
 }
 
+/**
+ * Finds when to stop weekly classes
+ * 
+ * @param {String} endTime end time Format: YYYYMMDDTHHMMSS
+ * @param {String} weekday course information Format: Term - Course Name	Format	Day/Time	Duration	Room
+ * @returns 
+ */
 function findRuleEnd(endTime, weekday) {
+    // setting Fall parameters
     if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
         var currentYear = academicYear.substring(0,4);
         var seasonEnd = fallEnd;
         var endMonth = "12";
     }
+    // setting Winter parameters
     else if (weekday.includes("Winter") || (weekday.includes("Fall") && weekday.includes["Winter"])) { 
         var currentYear = academicYear.substring(5,9);
         var seasonEnd = winterEnd;
         var endMonth = "04";
     }
+    // find current day and ensure is two digits Format: DD
     var currentDay = /[1-2]?\d/.exec(seasonEnd).toString();
     while (currentDay.length < 2) {
         currentDay = "0" + currentDay;
     }
+    // find current time and ensure is six digits Format: HHMMSS
     var currentTime = /[0-2]?\d\d\d[0][0]/.exec(endTime).toString();
     while (currentTime.length < 6) {
         currentTime = "0" + currentTime;
     }
+    // resulting rule Format: YYYYMMDDTHHMMSS
     var ruleEnd = currentYear + endMonth + currentDay + "T" + currentTime;
     return ruleEnd;
 }
 
-// https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+/**
+ * Creates and downloads file
+ * https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+ * 
+ * @param {String} filename name of downloaded file
+ * @param {String} text file contents
+ */
 function download(filename, text) {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -190,14 +259,26 @@ function download(filename, text) {
     document.body.removeChild(element);
 }
 
+/**
+ * Finds the first weekday after the term start for class
+ * https://stackoverflow.com/questions/33078406/getting-the-date-of-next-monday
+ * 
+ * @param {String} currentDate current start time Format: YYYYMMDDTHHMMSS
+ * @param {String} weekday course weekday Format: MO, TU, WE, TH, FR
+ * @returns 
+ */
 function firstWeekday(currentDate, weekday) {
+    // default to Sunday
     dayIndex = 0;
+    // find time, month, day, and year
+    // Format: HHMMSS
     var currentTime = /[0-2]?\d\d\d[0][0]/.exec(currentDate).toString();
-    console.log(currentTime);
+    // Format: YYYYMMDD
     var currentDate = /[1-2]?\d\d\d\d\d\d\d/.exec(currentDate).toString();
     var year = currentDate.substring(0,4);
     var month = currentDate.substring(4,6);
     var day = currentDate.substring(6,8);
+    // set index based on weekday
     if (weekday.includes("MO")){
         dayIndex = 1;
     }
@@ -219,14 +300,15 @@ function firstWeekday(currentDate, weekday) {
     else if (weekday.includes("SU")){
         dayIndex = 7;
     }
+    // finds first weekday after term start, including start date
     var modifiedDate = new Date(year, month - 1, day);
-    console.log(modifiedDate);
     modifiedDate.setDate(modifiedDate.getDate() + ((dayIndex + 7 - modifiedDate.getDay()) % 7));
+    // formatting date, ensuring is two digits Format: DD
     day = modifiedDate.getDate().toString();
     while (day.length < 2) {
         day = "0" + day;
     }
+    // formatting date Format: YYYYMMDDTHHMMSS
     modifiedDate = year + "" + month + "" + day + "T" + currentTime;
-    console.log(modifiedDate);
     return modifiedDate;
 }
