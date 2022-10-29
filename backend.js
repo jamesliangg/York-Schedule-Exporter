@@ -84,7 +84,7 @@ function createCalendar() {
     courseEvent(fallArray);
     courseEvent(winterArray);
     fileOutput = fileOutput + "\n" + ending;
-    // download("scheudle.ics", fileOutput);
+    download("scheudle.ics", fileOutput);
 }
 
 function courseEvent(seasonArray) {
@@ -100,36 +100,29 @@ function courseEvent(seasonArray) {
         fileOutput = fileOutput + "\n" + ("DESCRIPTION: " + seasonArray[i].replace(/\s+/g,' ').trim());
         fileOutput = fileOutput + "\n" + ("END:VEVENT");
     }  
-    // console.log(fileOutput);
 }
 
 function findBeginTime(weekday) {
-    if (weekday.includes("Fall") && !weekday.includes("Winter")) {
+    if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
         var currentYear = academicYear.substring(0,4);
-        var currentDay = fallStart.substring(fallStart.length - 2, fallStart.length).trim();
-        while (currentDay.length < 2) {
-            currentDay = "0" + currentDay;
-        }
-        var currentTime = /[1-2]?\d:[0-5]\d/.exec(weekday).toString();
-        currentTime = currentTime.replace(/:/g,'');
-        while (currentTime.length < 4) {
-            currentTime = "0" + currentTime;
-        }
-        var beginTime = currentYear + "09" + currentDay + "T" + currentTime + "00";
+        var seasonStart = fallStart;
+        var startMonth = "09";
     }
-    else if (weekday.includes("Winter") && !weekday.includes("Fall")) {
+    else if (weekday.includes("Winter") && !weekday.includes("Fall")) { 
         var currentYear = academicYear.substring(5,9);
-        var currentDay = winterStart.substring(winterStart.length - 2, winterStart.length).trim();
-        while (currentDay.length < 2) {
-            currentDay = "0" + currentDay;
-        }
-        var currentTime = /[1-2]?\d:[0-5]\d/.exec(weekday).toString();
-        currentTime = currentTime.replace(/:/g,'');
-        while (currentTime.length < 4) {
-            currentTime = "0" + currentTime;
-        }
-        var beginTime = currentYear + "01" + currentDay + "T" + currentTime + "00";
+        var seasonStart = winterStart;
+        var startMonth = "01";
     }
+    var currentDay = seasonStart.substring(seasonStart.length - 2, seasonStart.length).trim();
+    while (currentDay.length < 2) {
+        currentDay = "0" + currentDay;
+    }
+    var currentTime = /[1-2]?\d:[0-5]\d/.exec(weekday).toString();
+    currentTime = currentTime.replace(/:/g,'');
+    while (currentTime.length < 4) {
+        currentTime = "0" + currentTime;
+    }
+    var beginTime = currentYear + startMonth + currentDay + "T" + currentTime + "00";
     return beginTime;
 }
 
@@ -153,31 +146,34 @@ function yorkDuration(duration, startTime) {
     else {
       var endTime = endHour * 100 + (minutesToHour + yorkMinutes) * 100;
     }
-    return originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime.toString();
+    var endTime = endTime.toString();
+    while (endTime.length < 6) {
+        endTime = "0" + endTime;
+    }
+    console.log(originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime);
+    return originalStartTime.substring(0, originalStartTime.lastIndexOf("T") + 1) + endTime;
 }
 
 function findRuleEnd(endTime, weekday) {
-    if (weekday.includes("Fall") && !weekday.includes("Winter")) {
+    if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
         var currentYear = academicYear.substring(0,4);
-        var currentDay = /[1-2]?\d/.exec(fallEnd).toString();
-        while (currentDay.length < 2) {
-            currentDay = "0" + currentDay;
-        }
-        var currentTime = /[1-2]?\d\d\d[0][0]/.exec(endTime).toString();
-        while (currentTime.length < 6) {
-            currentTime = "0" + currentTime;
-        }
-        var ruleEnd = currentYear + "12" + currentDay + "T" + currentTime;
+        var seasonEnd = fallEnd;
+        var endMonth = "12";
     }
-    else if (weekday.includes("Winter") || (weekday.includes("Fall") && weekday.includes["Winter"])) {
+    else if (weekday.includes("Winter") || (weekday.includes("Fall") && weekday.includes["Winter"])) { 
         var currentYear = academicYear.substring(5,9);
-        var currentDay = winterEnd.substring(winterEnd.length - 2, winterEnd.length).trim();
-        while (currentDay.length < 2) {
-            currentDay = "0" + currentDay;
-        }
-        var currentTime = endTime.substring(endTime.lastIndexOf("T") + 1, endTime.length);
-        var ruleEnd = currentYear + "04" + currentDay + "T" + currentTime;
+        var seasonEnd = winterEnd;
+        var endMonth = "04";
     }
+    var currentDay = /[1-2]?\d/.exec(seasonEnd).toString();
+    while (currentDay.length < 2) {
+        currentDay = "0" + currentDay;
+    }
+    var currentTime = /[1-2]?\d\d\d[0][0]/.exec(endTime).toString();
+    while (currentTime.length < 6) {
+        currentTime = "0" + currentTime;
+    }
+    var ruleEnd = currentYear + endMonth + currentDay + "T" + currentTime;
     return ruleEnd;
 }
 
