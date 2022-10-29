@@ -24,7 +24,6 @@ function textToArray() {
     pastedArray = pastedArray.filter((a) => a);
     for (var i in pastedArray) {
         if (!pastedArray[i].includes("Fall") && !pastedArray[i].includes("Winter") && pastedArray[i].includes(":")) {
-            console.log(i);
             pastedArray[i] = pastedArray[i - 1].substring(0, pastedArray[i - 1].indexOf("Cr=") + 9) + " " + pastedArray[i];
         }
     }
@@ -85,7 +84,7 @@ function createCalendar() {
     courseEvent(fallArray);
     courseEvent(winterArray);
     fileOutput = fileOutput + "\n" + ending;
-    download("scheudle.ics", fileOutput);
+    // download("scheudle.ics", fileOutput);
 }
 
 function courseEvent(seasonArray) {
@@ -101,7 +100,7 @@ function courseEvent(seasonArray) {
         fileOutput = fileOutput + "\n" + ("DESCRIPTION: " + seasonArray[i].replace(/\s+/g,' ').trim());
         fileOutput = fileOutput + "\n" + ("END:VEVENT");
     }  
-    console.log(fileOutput);
+    // console.log(fileOutput);
 }
 
 function findBeginTime(weekday) {
@@ -160,11 +159,14 @@ function yorkDuration(duration, startTime) {
 function findRuleEnd(endTime, weekday) {
     if (weekday.includes("Fall") && !weekday.includes("Winter")) {
         var currentYear = academicYear.substring(0,4);
-        var currentDay = fallEnd.substring(fallStart.length - 2, fallEnd.length).trim();
+        var currentDay = /[1-2]?\d/.exec(fallEnd).toString();
         while (currentDay.length < 2) {
             currentDay = "0" + currentDay;
         }
-        var currentTime = endTime.substring(endTime.lastIndexOf("T") + 1, endTime.length);
+        var currentTime = /[1-2]?\d\d\d[0][0]/.exec(endTime).toString();
+        while (currentTime.length < 6) {
+            currentTime = "0" + currentTime;
+        }
         var ruleEnd = currentYear + "12" + currentDay + "T" + currentTime;
     }
     else if (weekday.includes("Winter") || (weekday.includes("Fall") && weekday.includes["Winter"])) {
