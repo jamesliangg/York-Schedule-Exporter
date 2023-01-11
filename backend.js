@@ -9,12 +9,12 @@ var fallStart = "";
 var fallEnd = "";
 var winterStart = "";
 var winterEnd = "";
-var academicYear = "";
 var fileOutput = "";
+var academicYear = 2022;
 
 function mainFunction() {
-    fetch_demo();
     textToArray();
+    semesterDates();
 }
 
 /**
@@ -48,50 +48,24 @@ function textToArray() {
 }
 
 /**
- * Gets York important dates. Then calls classesStart function.
- * https://www.scrapingbee.com/blog/web-scraping-javascript/
+ * Finds start and end dates for Fall and Winter. Days added based on uoftAcademicYear.xlsx located in repository.
  */
-async function fetch_demo()
-{
-	const resp = await fetch('https://registrar.yorku.ca/enrol/dates/2022-2023/fall-winter');
-	var htmlOut = (await resp.text());
-    classesStart(htmlOut);
-}
-
-/**
- * Finds the start and end times of the terms.
- * 
- * @param {String} resp HTML of York important dates
- */
-function classesStart(resp) {
-    var htmlArray = resp.split("\n");
-    for (var i in htmlArray) {
-        // find Winter and Fall class start dates
-        if (htmlArray[i].includes("Classes start") && htmlArray[i].includes("style")) {
-            i++;
-            fallStart = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
-            i = i + 2;
-            winterStart = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
-        }
-        // find Fall end date
-        else if (htmlArray[i].includes("Fall classes end") && htmlArray[i].includes("style")) {
-            i++;
-            fallEnd = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
-        }
-        // find Winter end date
-        else if (htmlArray[i].includes("Winter classes end") && htmlArray[i].includes("style")) {
-            i++;
-            i = i + 2;
-            winterEnd = htmlArray[i].substring(htmlArray[i].lastIndexOf("\">") + 2, htmlArray[i].lastIndexOf("\/") - 1).trim();
-        }
-        // find current academic year
-        if (htmlArray[i].includes("Undergraduate Fall/Winter")) {
-            academicYear = htmlArray[i].substring(htmlArray[i].indexOf("Winter") + 6, htmlArray[i].indexOf("Important") - 1).trim();
-        }
-    }
+function semesterDates() {
+    // Labour Day
+    var labourDay = new Date(academicYear, 8, 1);
+    labourDay.setDate(labourDay.getDate() + (((1 + 7 - labourDay.getDay()) % 7) || 7));
+    console.log(labourDay);
+    // first Thursday after Labour Day
+    fallStart = String(labourDay.getDate() + 3);
     console.log(fallStart);
+    // 90 days after first day
+    fallEnd = String(addDays(labourDay, 93).getDate());
     console.log(fallEnd);
+    // 33 days after fall end
+    winterStart = String(addDays(labourDay, 126).getDate());
     console.log(winterStart);
+    // 88 days after first day
+    winterEnd = String(addDays(labourDay, 214).getDate());
     console.log(winterEnd);
     createCalendar();
 }
@@ -146,20 +120,20 @@ function courseEvent(seasonArray) {
 function findBeginTime(weekday) {
     // setting Fall parameters
     if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
-        var currentYear = academicYear.substring(0,4);
+        var currentYear = academicYear;
         var seasonStart = fallStart;
         var startMonth = "09";
     }
     // setting Winter parameters
     else if (weekday.includes("Winter") && !weekday.includes("Fall")) { 
-        var currentYear = academicYear.substring(5,9);
+        var currentYear = academicYear + 1;
         var seasonStart = winterStart;
         var startMonth = "01";
     }
     // finds day and ensures is two digits Format: DD
-    var currentDay = seasonStart.substring(seasonStart.length - 2, seasonStart.length).trim();
-    while (currentDay.length < 2) {
-        currentDay = "0" + currentDay;
+    // var currentDay = seasonStart.substring(seasonStart.length - 2, seasonStart.length).trim();
+    while (seasonStart.length < 2) {
+        seasonStart = "0" + seasonStart;
     }
     // finds current time and removes :, also ensures is four digits Format: HHMM
     var currentTime = /[1-2]?\d:[0-5]\d/.exec(weekday).toString();
@@ -168,7 +142,7 @@ function findBeginTime(weekday) {
         currentTime = "0" + currentTime;
     }
     // resulting begin time Format: YYYYMMDDTHHMMSS
-    var beginTime = currentYear + startMonth + currentDay + "T" + currentTime + "00";
+    var beginTime = currentYear + startMonth + seasonStart + "T" + currentTime + "00";
     return beginTime;
 }
 
@@ -217,13 +191,13 @@ function yorkDuration(duration, startTime) {
 function findRuleEnd(endTime, weekday) {
     // setting Fall parameters
     if (weekday.includes("Fall") && !weekday.includes("Winter")) { 
-        var currentYear = academicYear.substring(0,4);
+        var currentYear = academicYear;
         var seasonEnd = fallEnd;
         var endMonth = "12";
     }
     // setting Winter parameters
     else if (weekday.includes("Winter") || (weekday.includes("Fall") && weekday.includes["Winter"])) { 
-        var currentYear = academicYear.substring(5,9);
+        var currentYear = academicYear + 1;
         var seasonEnd = winterEnd;
         var endMonth = "04";
     }
@@ -312,3 +286,13 @@ function firstWeekday(currentDate, weekday) {
     modifiedDate = year + "" + month + "" + day + "T" + currentTime;
     return modifiedDate;
 }
+
+/**
+ * Adds days to date
+ * https://stackoverflow.com/questions/563406/how-to-add-days-to-date
+ */
+function addDays(date, days) {
+    var result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }

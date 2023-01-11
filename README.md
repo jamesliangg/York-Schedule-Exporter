@@ -1,5 +1,11 @@
 # York Schedule Exporter
- Export timetable to an iCalendar file from REM
+Export timetable to an iCalendar file from REM
+
+Calculations based on average UofT Academic Year length
+
+# Features
+- Import works for Google Calendar
+- Works for 2022-2023 Winter and Fall courses
 
 ## Credits
 Inspired by https://schedule.wattools.ca/
