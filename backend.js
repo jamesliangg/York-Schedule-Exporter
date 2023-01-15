@@ -35,15 +35,25 @@ function textToArray() {
     }
     // add courses to array based on term
     for (var i in pastedArray) {
-        if (pastedArray[i].includes("Fall") && !pastedArray[i].includes("Winter")) {
-            fallArray.push(pastedArray[i]);
+        if (pastedArray[i].includes("Fall")) {
+            if (pastedArray[i].includes("Winter")) {
+                fallArray.push(pastedArray[i].replace("/Winter",""));
+            }
+            else {
+                fallArray.push(pastedArray[i]);
+            }
         }
-        else if (pastedArray[i].includes("Winter") && !pastedArray[i].includes("Fall")) {
-            winterArray.push(pastedArray[i]);
+        if (pastedArray[i].includes("Winter")) {
+            if (pastedArray[i].includes("Fall")) {
+                winterArray.push(pastedArray[i].replace("Fall/",""));
+            }
+            else {
+                winterArray.push(pastedArray[i]);
+            }
         }
-        else if (pastedArray[i].includes("Winter") && pastedArray[i].includes("Fall")) {
-            fullYearArray.push(pastedArray[i]);
-        }
+        // else if (pastedArray[i].includes("Winter") && pastedArray[i].includes("Fall")) {
+        //     fullYearArray.push(pastedArray[i]);
+        // }
     }
 }
 
@@ -101,11 +111,11 @@ function courseEvent(seasonArray) {
         // iCalendar formatting for events
         fileOutput = fileOutput + "\n" + ("BEGIN:VEVENT");
         fileOutput = fileOutput + "\n" + ("DTSTART:" + firstWeekday(beginTime, weekday));
-        fileOutput = fileOutput + "\n" + ("DTEND: " + firstWeekday(endTime, weekday));
+        fileOutput = fileOutput + "\n" + ("DTEND:" + firstWeekday(endTime, weekday));
         fileOutput = fileOutput + "\n" + ("RRULE:FREQ=WEEKLY;UNTIL=" + findRuleEnd(endTime, seasonArray[i]) + ";WKST=SU;BYDAY=" + weekday);
         fileOutput = fileOutput + "\n" + ("SUMMARY:" + seasonArray[i].substring(seasonArray[i].indexOf("-") + 2, seasonArray[i].indexOf("Cr=")).trim() + " in " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
-        fileOutput = fileOutput + "\n" + ("LOCATION: " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
-        fileOutput = fileOutput + "\n" + ("DESCRIPTION: " + seasonArray[i].replace(/\s+/g,' ').trim());
+        fileOutput = fileOutput + "\n" + ("LOCATION:" + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
+        fileOutput = fileOutput + "\n" + ("DESCRIPTION:" + seasonArray[i].replace(/\s+/g,' ').trim());
         fileOutput = fileOutput + "\n" + ("END:VEVENT");
     }  
 }
