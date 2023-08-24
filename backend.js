@@ -10,7 +10,7 @@ var fallEnd = "";
 var winterStart = "";
 var winterEnd = "";
 var fileOutput = "";
-var academicYear = 2022;
+var academicYear = 2023;
 
 function mainFunction() {
     textToArray();
