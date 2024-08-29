@@ -10,7 +10,7 @@ var fallEnd = "";
 var winterStart = "";
 var winterEnd = "";
 var fileOutput = "";
-var academicYear = 2023;
+var academicYear = 2024;
 
 function mainFunction() {
     textToArray();
@@ -65,8 +65,8 @@ function semesterDates() {
     var labourDay = new Date(academicYear, 8, 1);
     labourDay.setDate(labourDay.getDate() + (((1 + 7 - labourDay.getDay()) % 7) || 7));
     console.log(labourDay);
-    // first Thursday after Labour Day
-    fallStart = String(labourDay.getDate() + 3);
+    // first Tuesday after Labour Day
+    fallStart = String(labourDay.getDate() + 1);
     console.log(fallStart);
     // 90 days after first day
     fallEnd = String(addDays(labourDay, 93).getDate());
