@@ -65,8 +65,8 @@ function semesterDates() {
     var labourDay = new Date(academicYear, 8, 1);
     labourDay.setDate(labourDay.getDate() + (((1 + 7 - labourDay.getDay()) % 7) || 7));
     console.log(labourDay);
-    // first Tuesday after Labour Day
-    fallStart = String(labourDay.getDate() + 1);
+    // first Wednesday after Labour Day
+    fallStart = String(labourDay.getDate() + 2);
     console.log(fallStart);
     // 90 days after first day
     fallEnd = String(addDays(labourDay, 93).getDate());
