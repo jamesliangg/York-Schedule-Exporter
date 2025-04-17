@@ -79,9 +79,11 @@ function semesterDates() {
     winterEnd = String(addDays(labourDay, 214).getDate());
     console.log(winterEnd);
     // Summer term dates
-    var summerStartDate = new Date(academicYear + 1, 4, 1); // May 1st
-    summerStart = String(summerStartDate.getDate());
-    summerEnd = String(addDays(summerStartDate, 99).getDate()); // 99 days for summer term
+    var mayFirst = new Date(academicYear + 1, 4, 1); // May 1st
+    var firstMonday = new Date(mayFirst);
+    firstMonday.setDate(mayFirst.getDate() + ((1 + 7 - mayFirst.getDay()) % 7)); // Find first Monday
+    summerStart = String(firstMonday.getDate());
+    summerEnd = String(addDays(firstMonday, 100).getDate()); // 100 days for summer term
     console.log(summerStart, summerEnd);
     createCalendar();
 }
