@@ -1,5 +1,6 @@
 var fallArray = [];
 var winterArray = [];
+var summerArray = []; // New array for summer courses
 var fullYearArray = [];
 var beginningFormat = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -9,6 +10,8 @@ var fallStart = "";
 var fallEnd = "";
 var winterStart = "";
 var winterEnd = "";
+var summerStart = ""; // New variable for summer start
+var summerEnd = ""; // New variable for summer end
 var fileOutput = "";
 var academicYear = 2024;
 
@@ -29,7 +32,7 @@ function textToArray() {
     pastedArray = pastedArray.filter((a) => a);
     // add Term and Course Name to classes that are missing
     for (var i in pastedArray) {
-        if (!pastedArray[i].includes("Fall") && !pastedArray[i].includes("Winter") && pastedArray[i].includes(":")) {
+        if (!pastedArray[i].includes("Fall") && !pastedArray[i].includes("Winter") && !pastedArray[i].includes("Summer") && pastedArray[i].includes(":")) {
             pastedArray[i] = pastedArray[i - 1].substring(0, pastedArray[i - 1].indexOf("Cr=") + 9) + " " + pastedArray[i];
         }
     }
@@ -37,28 +40,26 @@ function textToArray() {
     for (var i in pastedArray) {
         if (pastedArray[i].includes("Fall")) {
             if (pastedArray[i].includes("Winter")) {
-                fallArray.push(pastedArray[i].replace("/Winter",""));
-            }
-            else {
+                fallArray.push(pastedArray[i].replace("/Winter", ""));
+            } else {
                 fallArray.push(pastedArray[i]);
             }
         }
         if (pastedArray[i].includes("Winter")) {
             if (pastedArray[i].includes("Fall")) {
-                winterArray.push(pastedArray[i].replace("Fall/",""));
-            }
-            else {
+                winterArray.push(pastedArray[i].replace("Fall/", ""));
+            } else {
                 winterArray.push(pastedArray[i]);
             }
         }
-        // else if (pastedArray[i].includes("Winter") && pastedArray[i].includes("Fall")) {
-        //     fullYearArray.push(pastedArray[i]);
-        // }
+        if (pastedArray[i].includes("Summer")) { // Handle summer courses
+            summerArray.push(pastedArray[i]);
+        }
     }
 }
 
 /**
- * Finds start and end dates for Fall and Winter. Days added based on uoftAcademicYear.xlsx located in repository.
+ * Finds start and end dates for Fall, Winter, and Summer. Days added based on uoftAcademicYear.xlsx located in repository.
  */
 function semesterDates() {
     // Labour Day
@@ -77,6 +78,11 @@ function semesterDates() {
     // 88 days after first day
     winterEnd = String(addDays(labourDay, 214).getDate());
     console.log(winterEnd);
+    // Summer term dates
+    var summerStartDate = new Date(academicYear + 1, 4, 1); // May 1st
+    summerStart = String(summerStartDate.getDate());
+    summerEnd = String(addDays(summerStartDate, 99).getDate()); // 99 days for summer term
+    console.log(summerStart, summerEnd);
     createCalendar();
 }
 
@@ -86,9 +92,10 @@ function semesterDates() {
 function createCalendar() {
     // iCalendar formatting
     fileOutput = beginningFormat;
-    // adds Fall and Winter courses
+    // adds Fall, Winter, and Summer courses
     courseEvent(fallArray);
     courseEvent(winterArray);
+    courseEvent(summerArray);
     // iCalendar formatting
     fileOutput = fileOutput + "\n" + ending;
     // download file
@@ -107,7 +114,7 @@ function courseEvent(seasonArray) {
         // find ending time of course Format: YYYYMMDDTHHMMSS
         var endTime = yorkDuration(seasonArray[i].substring(seasonArray[i].indexOf("min") - 4, seasonArray[i].indexOf("min") - 1).trim(), beginTime);
         // find weekday Format: MO, TU, WE, TH, FR
-        var weekday = seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0,2);
+        var weekday = seasonArray[i].substring(seasonArray[i].indexOf(":") - 6, seasonArray[i].indexOf(":") - 3).trim().substring(0, 2);
         // iCalendar formatting for events
         fileOutput = fileOutput + "\n" + ("BEGIN:VEVENT");
         fileOutput = fileOutput + "\n" + ("DTSTART:" + firstWeekday(beginTime, weekday));
@@ -115,9 +122,9 @@ function courseEvent(seasonArray) {
         fileOutput = fileOutput + "\n" + ("RRULE:FREQ=WEEKLY;UNTIL=" + findRuleEnd(endTime, seasonArray[i]) + ";WKST=SU;BYDAY=" + weekday);
         fileOutput = fileOutput + "\n" + ("SUMMARY:" + seasonArray[i].substring(seasonArray[i].indexOf("-") + 2, seasonArray[i].indexOf("Cr=")).trim() + " in " + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
         fileOutput = fileOutput + "\n" + ("LOCATION:" + seasonArray[i].substring(seasonArray[i].lastIndexOf("min") + 3, seasonArray[i].length).trim());
-        fileOutput = fileOutput + "\n" + ("DESCRIPTION:" + seasonArray[i].replace(/\s+/g,' ').trim());
+        fileOutput = fileOutput + "\n" + ("DESCRIPTION:" + seasonArray[i].replace(/\s+/g, ' ').trim());
         fileOutput = fileOutput + "\n" + ("END:VEVENT");
-    }  
+    }
 }
 
 /**
@@ -140,14 +147,19 @@ function findBeginTime(weekday) {
         var seasonStart = winterStart;
         var startMonth = "01";
     }
+    // setting Summer parameters
+    else if (weekday.includes("Summer")) {
+        var currentYear = academicYear + 1;
+        var seasonStart = summerStart;
+        var startMonth = "05";
+    }
     // finds day and ensures is two digits Format: DD
-    // var currentDay = seasonStart.substring(seasonStart.length - 2, seasonStart.length).trim();
     while (seasonStart.length < 2) {
         seasonStart = "0" + seasonStart;
     }
     // finds current time and removes :, also ensures is four digits Format: HHMM
     var currentTime = /[1-2]?\d:[0-5]\d/.exec(weekday).toString();
-    currentTime = currentTime.replace(/:/g,'');
+    currentTime = currentTime.replace(/:/g, '');
     while (currentTime.length < 4) {
         currentTime = "0" + currentTime;
     }
@@ -210,6 +222,12 @@ function findRuleEnd(endTime, weekday) {
         var currentYear = academicYear + 1;
         var seasonEnd = winterEnd;
         var endMonth = "04";
+    }
+    // setting Summer parameters
+    else if (weekday.includes("Summer")) {
+        var currentYear = academicYear + 1;
+        var seasonEnd = summerEnd;
+        var endMonth = "08";
     }
     // find current day and ensure is two digits Format: DD
     var currentDay = /[1-2]?\d/.exec(seasonEnd).toString();
@@ -305,4 +323,4 @@ function addDays(date, days) {
     var result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
-  }
+}
