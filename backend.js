@@ -13,7 +13,7 @@ var winterEnd = "";
 var summerStart = ""; // New variable for summer start
 var summerEnd = ""; // New variable for summer end
 var fileOutput = "";
-var academicYear = 2024;
+var academicYear = 2025;
 
 function mainFunction() {
     textToArray();
