@@ -64,7 +64,7 @@ function textToArray() {
 function semesterDates() {
     // Labour Day
     var labourDay = new Date(academicYear, 8, 1);
-    labourDay.setDate(labourDay.getDate() + (((1 + 7 - labourDay.getDay()) % 7) || 7));
+    labourDay.setDate(labourDay.getDate() + ((1 + 7 - labourDay.getDay()) % 7));
     console.log(labourDay);
     // first Wednesday after Labour Day
     fallStart = String(labourDay.getDate() + 2);
